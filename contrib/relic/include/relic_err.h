@@ -57,7 +57,7 @@ enum errors {
 	/** Occurs when memory-allocating functions fail. */
 	ERR_NO_MEMORY = 1,
 	/** Occcurs when the library precision is not sufficient. */
-	ERR_NO_PRECI,
+    ERR_NO_PRECI,
 	/** Occurs when a file is not found. */
 	ERR_NO_FILE,
 	/** Occurs when the specified number of bytes cannot be read from source. */
