@@ -34,7 +34,11 @@ add_custom_command(
 # generate libBLS.jnilib
 add_library(jbls MODULE BLSPrivateKey.cpp BLSPrivateKey.h)
 set_target_properties(jbls PROPERTIES SUFFIX ".dylib")
-target_link_libraries(jbls ${JNI_LIBRARIES})
+if (SODIUM_FOUND)
+    target_link_libraries(jbls PRIVATE ${JNI_LIBRARIES} blstmp relic_s sodium)
+else ()
+    target_link_libraries(jbls PRIVATE ${JNI_LIBRARIES} blstmp relic_s)
+endif ()
 
 # add test to run JNIBLS
 add_test(NAME TestJNIBLS

@@ -9,7 +9,20 @@
 
 using namespace bls;
 
+JNIEXPORT jlong JNICALL Java_org_chia_jbls_BLSPrivateKey__1constructFromSeed
+        (JNIEnv *env, jclass cls, jbyteArray seed) {
+    jsize length = (*env).GetArrayLength(seed);
+    PrivateKey *pKey = new PrivateKey(PrivateKey::FromSeed((uint8_t *) seed, (size_t) length));
+    return (jlong) pKey;
+}
+
+JNIEXPORT void JNICALL Java_org_chia_jbls_BLSPrivateKey__1delete
+        (JNIEnv *env, jclass cls, jlong ptr) {
+    auto *pKey = (PrivateKey *) ptr;
+    delete(pKey);
+}
+
 JNIEXPORT jint JNICALL Java_org_chia_jbls_BLSPrivateKey__1getPrivateKeySize
-        (JNIEnv *, jclass) {
+        (JNIEnv *env, jclass cls) {
     return (jint) PrivateKey::PRIVATE_KEY_SIZE;
 }
