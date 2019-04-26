@@ -10,6 +10,14 @@
 
 using namespace bls;
 
+JNIEXPORT jlong JNICALL Java_org_chia_jbls_BLSPrivateKey__1getPublicKey
+        (JNIEnv *, jclass, jlong pkPtr) {
+    PrivateKey pKey = *((PrivateKey*) pkPtr);
+    PublicKey *publicKeyCpy = new PublicKey(pKey.GetPublicKey());
+
+    return (jlong) publicKeyCpy;
+}
+
 JNIEXPORT jlong JNICALL Java_org_chia_jbls_BLSPrivateKey__1aggregateInsecure
         (JNIEnv *env, jclass, jlongArray pkPtrs) {
     jlong *pkPtrsArray = env->GetLongArrayElements(pkPtrs, nullptr);
@@ -41,12 +49,12 @@ JNIEXPORT jlong JNICALL Java_org_chia_jbls_BLSPrivateKey__1constructFromSeed
 
 JNIEXPORT jlong JNICALL Java_org_chia_jbls_BLSPrivateKey__1constructFromBytes
         (JNIEnv *env, jclass, jbyteArray bytes) {
-    jbyte *seedArray = env->GetByteArrayElements(bytes, nullptr);
+    jbyte *bytesArray = env->GetByteArrayElements(bytes, nullptr);
 
-    const PrivateKey &pKeyFromBytes = PrivateKey::FromBytes((uint8_t *) seedArray, true);
+    const PrivateKey &pKeyFromBytes = PrivateKey::FromBytes((uint8_t *) bytesArray, true);
     PrivateKey *pKeyCopy = new PrivateKey(pKeyFromBytes);
 
-    env->ReleaseByteArrayElements(bytes, seedArray, 0);
+    env->ReleaseByteArrayElements(bytes, bytesArray, 0);
 
     return (jlong) pKeyCopy;
 }

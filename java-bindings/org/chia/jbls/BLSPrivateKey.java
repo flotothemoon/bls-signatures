@@ -42,6 +42,14 @@ public final class BLSPrivateKey {
         return new BLSSignature(sigPtr);
 	}
 
+	public BLSPublicKey getPublicKey() {
+	    return new BLSPublicKey(_getPublicKey(this.nativePtr));
+	}
+
+	long getNativePtr() {
+	    return this.nativePtr;
+	}
+
 	public static BLSPrivateKey aggregateInsecure(List<BLSPrivateKey> privateKeys) throws BLSException {
 		Objects.requireNonNull(privateKeys, "privateKeys is required");
 
@@ -61,6 +69,8 @@ public final class BLSPrivateKey {
 	public static BLSPrivateKey fromBytes(byte[] bytes) throws BLSException {
 		return new BLSPrivateKey(_constructFromBytes(bytes));
 	}
+
+    private static native long _getPublicKey(long ptr);
 
 	private static native long _aggregateInsecure(long[] ptrs);
 

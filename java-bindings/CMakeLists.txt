@@ -16,23 +16,23 @@ project(JNIBLS)
 
 # compile BLSPrivateKey.java to class file
 set(CMAKE_JAVA_COMPILE_FLAGS "-source" "1.8" "-target" "1.8")
-add_jar(JNIBLS org/chia/jbls/JNIBLS.java org/chia/jbls/BLSPrivateKey.java org/chia/jbls/BLSSignature.java org/chia/jbls/BLSException.java)
+add_jar(JNIBLS org/chia/jbls/JNIBLS.java org/chia/jbls/BLSPrivateKey.java org/chia/jbls/BLSPublicKey.java org/chia/jbls/BLSSignature.java org/chia/jbls/BLSException.java)
 get_target_property(_jarFile JNIBLS JAR_FILE)
 get_target_property(_classDir JNIBLS CLASSDIR)
 
 # generate JNIBLS.h stub
 set (_stubDir "${CMAKE_CURRENT_BINARY_DIR}")
 add_custom_command(
-        OUTPUT BLSPrivateKey.h BLSSignature.h
+        OUTPUT BLSPrivateKey.h BLSPublicKey.h BLSSignature.h
         COMMAND ${Java_JAVAH_EXECUTABLE} -verbose
             -classpath ${_classDir}
             -d ${_stubDir}
-            -jni org.chia.jbls.JNIBLS org.chia.jbls.BLSPrivateKey org.chia.jbls.BLSSignature org.chia.jbls.BLSException
+            -jni org.chia.jbls.JNIBLS org.chia.jbls.BLSPrivateKey org.chia.jbls.BLSPublicKey org.chia.jbls.BLSSignature org.chia.jbls.BLSException
         DEPENDS JNIBLS
 )
 
 # generate libBLS.jnilib
-add_library(jbls MODULE BLSPrivateKey.cpp BLSSignature.cpp BLSPrivateKey.h BLSSignature.h BLSUtils.cpp BLSUtils.h)
+add_library(jbls MODULE BLSPrivateKey.cpp BLSPrivateKey.h BLSPublicKey.h  BLSPublicKey.cpp BLSSignature.h BLSSignature.cpp BLSUtils.cpp BLSUtils.h)
 set_target_properties(jbls PROPERTIES SUFFIX ".dylib")
 if (SODIUM_FOUND)
     target_link_libraries(jbls PRIVATE ${JNI_LIBRARIES} blstmp relic_s sodium)
