@@ -9,4 +9,8 @@ public final class JNIBLS {
 			loadedLibrary = true;
 		}
 	}
+
+	private JNIBLS() {
+	    throw new IllegalStateException("Cannot construct");
+	}
 }
