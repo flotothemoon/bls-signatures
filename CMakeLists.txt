@@ -76,6 +76,7 @@ set(PP_METHD "LAZYR;OATEP" CACHE STRING "")
 
 add_subdirectory(contrib/relic)
 add_subdirectory(src)
+add_subdirectory(java-bindings)
 
 if (EMSCRIPTEN)
   add_subdirectory(js-bindings)

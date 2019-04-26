@@ -6,7 +6,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../contrib/relic/include
   ${CMAKE_BINARY_DIR}/contrib/relic/include
   ${CMAKE_CURRENT_SOURCE_DIR}/../contrib/catch
-  )
+)
 
 pybind11_add_module(blspy ${CMAKE_CURRENT_SOURCE_DIR}/pythonbindings.cpp)
 
