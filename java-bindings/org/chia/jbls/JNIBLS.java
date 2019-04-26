@@ -1,12 +1,12 @@
 package org.chia.jbls;
 
-public final class JNIBLS {
-	private static boolean loadedLibrary = false;
-	static void ensureJNILoaded() {
-		if (!loadedLibrary) {
-			System.loadLibrary("jbls");
+import java.util.concurrent.atomic.AtomicBoolean;
 
-			loadedLibrary = true;
+public final class JNIBLS {
+	private static AtomicBoolean loadedLibrary = new AtomicBoolean(false);
+	static void ensureJNILoaded() {
+		if (loadedLibrary.compareAndSet(false, true)) {
+			System.loadLibrary("jbls");
 		}
 	}
 
