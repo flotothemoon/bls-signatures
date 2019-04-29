@@ -133,6 +133,12 @@ class Signature {
     static Signature AggregateSigs(
             std::vector<Signature> const &sigs);
 
+    // Internal methods
+    static Signature AggregateSigsInternal(
+            std::vector<Signature> const &sigs,
+            std::vector<std::vector<PublicKey> > const &pubKeys,
+            std::vector<std::vector<uint8_t*> > const &messageHashes);
+
     // Divides the aggregate signature (this) by a list of signatures.
     // These divisors can be single or aggregate signatures, but all
     // msg/pk pairs in these signatures must be distinct and unique.
@@ -149,15 +155,16 @@ class Signature {
     // Serializes ONLY the 96 byte public key. It does not serialize
     // the aggregation info.
     void Serialize(uint8_t* buffer) const;
-    std::vector<uint8_t> Serialize() const;
 
+    std::vector<uint8_t> Serialize() const;
     InsecureSignature GetInsecureSig() const;
 
     friend bool operator==(Signature const &a, Signature const &b);
+
     friend bool operator!=(Signature const &a, Signature const &b);
     friend std::ostream &operator<<(std::ostream &os, Signature const &s);
-
  private:
+
     // Prevent public construction, force static method
     Signature() {}
 
@@ -167,12 +174,6 @@ class Signature {
             std::vector<Signature> const &sigs,
             std::vector<PublicKey> const &pubKeys,
             std::vector<uint8_t*> const &messageHashes);
-
-    // Internal methods
-    static Signature AggregateSigsInternal(
-            std::vector<Signature> const &sigs,
-            std::vector<std::vector<PublicKey> > const &pubKeys,
-            std::vector<std::vector<uint8_t*> > const &messageHashes);
 
     // Efficiently aggregates many signatures using the simple aggregation
     // method. Performs only n g2 operations.

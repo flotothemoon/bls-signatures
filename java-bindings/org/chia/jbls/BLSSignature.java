@@ -58,13 +58,27 @@ public final class BLSSignature {
 	    return this.nativePtr;
 	}
 
-    public static BLSSignature aggregate(List<BLSSignature> signatures) {
-		long[] sigPtrs = new long[signatures.size()];
-		for (int i = 0; i < signatures.size(); i++) {
-			sigPtrs[i] = signatures.get(i).nativePtr;
+    public static BLSSignature aggregate(BLSSignature[] signatures, BLSPublicKey[][] aggrPubKeys, byte[][][] aggrMsgHashes) {
+		Objects.requireNonNull(signatures, "signatures is required");
+		Objects.requireNonNull(aggrPubKeys, "aggrPubKeys is required");
+		Objects.requireNonNull(aggrMsgHashes, "aggrMsgHashes is required");
+
+        if (signatures.length != aggrPubKeys.length || aggrPubKeys.length != aggrMsgHashes.length) {
+            throw new IllegalArgumentException("Must be same amount of sigs, aggr keys and aggr hashes");
+        }
+
+
+        long[] sigPtrs = new long[signatures.length];
+        long[][] aggrPubKeyPtrs = new long[aggrPubKeys.length][aggrPubKeys[0].length];
+		for (int i = 0; i < signatures.length; i++) {
+			sigPtrs[i] = signatures[i].nativePtr;
+
+			for (int y = 0; y < aggrPubKeys[i].length; y++) {
+			    aggrPubKeyPtrs[i][y] = aggrPubKeys[i][y].getNativePtr();
+			}
 		}
 
-		long aggregatedPtr = _aggregate(sigPtrs);
+		long aggregatedPtr = _aggregate(sigPtrs, aggrPubKeyPtrs, aggrMsgHashes);
 		return new BLSSignature(aggregatedPtr);
     }
 
@@ -72,7 +86,7 @@ public final class BLSSignature {
 		return new BLSSignature(_constructFromBytes(bytes));
 	}
 
-	private static native long _aggregate(long[] ptrs);
+	private static native long _aggregate(long[] ptrs, long[][] aggrPubKeyPtrs, byte[][][] aggrMsgHashes);
 
 	private static native long _constructFromBytes(byte[] seed);
 

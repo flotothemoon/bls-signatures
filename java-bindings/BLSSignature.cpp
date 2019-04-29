@@ -12,19 +12,56 @@
 using namespace bls;
 
 JNIEXPORT jlong JNICALL Java_org_chia_jbls_BLSSignature__1aggregate
-        (JNIEnv *env, jclass, jlongArray sigPtrs) {
-    jlong *sigPtrsArray = env->GetLongArrayElements(sigPtrs, nullptr);
-    jsize length = env->GetArrayLength(sigPtrs);
+        (JNIEnv *env, jclass, jlongArray sigPtrs, jobjectArray aggrPubKeys, jobjectArray aggrMsgHashes) {
     std::vector<Signature> sigVector;
-    for (int i = 0; i < length; ++i) {
-        auto pKey = (Signature*) sigPtrsArray[i];
-        sigVector.push_back(*pKey);
-    }
-    env->ReleaseLongArrayElements(sigPtrs, sigPtrsArray, 0);
+    std::vector<std::vector<PublicKey>> aggrPubKeysVector;
+    std::vector<std::vector<uint8_t *>> aggrMsgHashesVector;
+    try {
+        jlong *sigPtrsArray = env->GetLongArrayElements(sigPtrs, nullptr);
+        jsize length = env->GetArrayLength(sigPtrs);
+        for (int i = 0; i < length; ++i) {
+            auto sig = *(Signature*) sigPtrsArray[i];
 
-    const Signature &signatureAggregate = Signature::AggregateSigs(sigVector);
-    Signature *signatureAggregateCpy = new Signature(signatureAggregate);
-    return (jlong) signatureAggregateCpy;
+            std::vector<uint8_t *> msgHashesVector;
+            std::vector<PublicKey> pubKeysVector;
+            auto pubKeysArray = (jlongArray) env->GetObjectArrayElement(aggrPubKeys, i);
+            jlong* pubKeys = env->GetLongArrayElements(pubKeysArray, nullptr);
+            auto msgHashesArray = (jobjectArray) env->GetObjectArrayElement(aggrMsgHashes, i);
+            jsize numMsgHashes = env->GetArrayLength(msgHashesArray);
+            for (int j = 0; j < numMsgHashes; ++j) {
+                auto msgHashArray = (jbyteArray) (env->GetObjectArrayElement(msgHashesArray, j));
+                jbyte *msgHashes = env->GetByteArrayElements(msgHashArray, nullptr);
+                msgHashesVector.push_back((uint8_t *) msgHashes);
+                env->ReleaseByteArrayElements(msgHashArray, msgHashes, 0);
+
+                auto pKey = *((PublicKey*) pubKeys[i]);
+                pubKeysVector.push_back(pKey);
+            }
+
+            env->ReleaseLongArrayElements(pubKeysArray, pubKeys, 0);
+
+            aggrPubKeysVector.push_back(pubKeysVector);
+            aggrMsgHashesVector.push_back(msgHashesVector);
+            sigVector.push_back(sig);
+        }
+        env->ReleaseLongArrayElements(sigPtrs, sigPtrsArray, 0);
+    } catch (...) {
+        jniThrowBLS(env, "Error while creating signature array");
+        return (jlong) 0;
+    }
+
+    try {
+        const Signature &signatureAggregate = Signature::AggregateSigsInternal(
+                sigVector,
+                aggrPubKeysVector,
+                aggrMsgHashesVector
+        );
+        auto *signatureAggregateCpy = new Signature(signatureAggregate);
+        return (jlong) signatureAggregateCpy;
+    } catch (...) {
+        jniThrowBLS(env, "Error while aggregating signatures");
+        return (jlong) 0;
+    }
 }
 
 JNIEXPORT jlong JNICALL Java_org_chia_jbls_BLSSignature__1constructFromBytes
@@ -59,21 +96,31 @@ JNIEXPORT jboolean JNICALL Java_org_chia_jbls_BLSSignature__1verify
     jlong *pubKeyPtrsArray = env->GetLongArrayElements(pubKeyPtrs, nullptr);
     jsize length = env->GetArrayLength(pubKeyPtrs);
     std::vector<AggregationInfo> aggregationInfos;
-    for (int i = 0; i < length; ++i) {
-        auto pKey = *((PublicKey*) pubKeyPtrsArray[i]);
-        jbyteArray msgHash = (jbyteArray) env->GetObjectArrayElement(msgHashes, i);
-        jbyte *msgHashArray = env->GetByteArrayElements(msgHash, nullptr);
+    try {
+        for (int i = 0; i < length; ++i) {
+            auto pKey = *((PublicKey*) pubKeyPtrsArray[i]);
+            auto msgHash = (jbyteArray) env->GetObjectArrayElement(msgHashes, i);
+            jbyte *msgHashArray = env->GetByteArrayElements(msgHash, nullptr);
 
-        aggregationInfos.push_back(AggregationInfo::FromMsgHash(pKey, (uint8_t*) msgHashArray));
+            aggregationInfos.push_back(AggregationInfo::FromMsgHash(pKey, (uint8_t*) msgHashArray));
 
-        env->ReleaseByteArrayElements(msgHash, msgHashArray, 0);
+            env->ReleaseByteArrayElements(msgHash, msgHashArray, 0);
+        }
+        env->ReleaseLongArrayElements(pubKeyPtrs, pubKeyPtrsArray, 0);
+    } catch (...) {
+        jniThrowBLS(env, "Error while creating aggregation info");
+        return false;
     }
-    env->ReleaseLongArrayElements(pubKeyPtrs, pubKeyPtrsArray, 0);
 
-    AggregationInfo mergedAggregationInfo = AggregationInfo::MergeInfos(aggregationInfos);
-    Signature signature = *((Signature *) ptr);
-    signature.SetAggregationInfo(mergedAggregationInfo);
-    return (jboolean) signature.Verify();
+    try {
+        AggregationInfo mergedAggregationInfo = AggregationInfo::MergeInfos(aggregationInfos);
+        Signature signature = *((Signature *) ptr);
+        signature.SetAggregationInfo(mergedAggregationInfo);
+        return (jboolean) signature.Verify();
+    } catch (...) {
+        jniThrowBLS(env, "Error while verifying signature");
+        return false;
+    }
 }
 
 JNIEXPORT void JNICALL Java_org_chia_jbls_BLSSignature__1delete

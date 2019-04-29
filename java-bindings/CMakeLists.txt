@@ -33,6 +33,11 @@ add_custom_command(
 
 # generate libBLS.jnilib
 add_library(jbls MODULE BLSPrivateKey.cpp BLSPrivateKey.h BLSPublicKey.h  BLSPublicKey.cpp BLSSignature.h BLSSignature.cpp BLSUtils.cpp BLSUtils.h)
+
+if (APPLE)
+    set_target_properties(jbls PROPERTIES SUFFIX ".dylib")
+endif()
+
 if (SODIUM_FOUND)
     target_link_libraries(jbls PRIVATE ${JNI_LIBRARIES} blstmp relic_s sodium)
 else ()
