@@ -24,17 +24,23 @@ JNIEXPORT jlong JNICALL Java_org_chia_jbls_BLSSignature__1aggregate
 
             std::vector<uint8_t *> msgHashesVector;
             std::vector<PublicKey> pubKeysVector;
+
+
             auto pubKeysArray = (jlongArray) env->GetObjectArrayElement(aggrPubKeys, i);
             jlong* pubKeys = env->GetLongArrayElements(pubKeysArray, nullptr);
+
             auto msgHashesArray = (jobjectArray) env->GetObjectArrayElement(aggrMsgHashes, i);
             jsize numMsgHashes = env->GetArrayLength(msgHashesArray);
+
             for (int j = 0; j < numMsgHashes; ++j) {
                 auto msgHashArray = (jbyteArray) (env->GetObjectArrayElement(msgHashesArray, j));
-                jbyte *msgHashes = env->GetByteArrayElements(msgHashArray, nullptr);
-                msgHashesVector.push_back((uint8_t *) msgHashes);
-                env->ReleaseByteArrayElements(msgHashArray, msgHashes, 0);
+                jbyte *msgHash = env->GetByteArrayElements(msgHashArray, nullptr);
+                uint8_t msgHashCopy[BLS::MESSAGE_HASH_LEN];
+                memcpy(msgHashCopy, (uint8_t *) msgHash, BLS::MESSAGE_HASH_LEN);
+                env->ReleaseByteArrayElements(msgHashArray, msgHash, 0);
+                msgHashesVector.push_back(msgHashCopy);
 
-                auto pKey = *((PublicKey*) pubKeys[i]);
+                auto pKey = *((PublicKey*) pubKeys[j]);
                 pubKeysVector.push_back(pKey);
             }
 
